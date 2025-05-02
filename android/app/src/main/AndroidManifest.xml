@@ -3,6 +3,11 @@
         android:label="ev_tracker_app"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
+
+         <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyAxdfHJHJEGrh5GkcyfJLTeuaIZyJxCjPI"/>
+
         <activity
             android:name=".MainActivity"
             android:exported="true"
