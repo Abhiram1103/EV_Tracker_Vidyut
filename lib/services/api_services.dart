@@ -1,39 +1,42 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../models/position_model.dart';
-import '../config/env.dart'; // Make sure this file exists and exports your env vars
 
 class ApiService {
-  static const _baseUrl = BASE_URL; // from env.dart
+  static final String _baseUrl = dotenv.env['BASE_URL']!;
+  static final String _phone = dotenv.env['PHONE']!;
+  static final String _password = dotenv.env['PASSWORD']!;
+  static final String _deviceId = dotenv.env['DEVICE_ID']!;
 
-  static Future<PositionModel?> fetchLatestPosition() async {
-    final basicAuth = 'Basic ${base64Encode(utf8.encode('$PHONE:$PASSWORD'))}';
+  /// Builds the Authorization header (Basic Auth as used by OneLap)
+  static String _buildAuthHeader() {
+    final credentials = base64Encode(utf8.encode('$_phone:$_password'));
+    return 'Basic $credentials';
+  }
 
+  /// Fetch latest position of the vehicle
+  static Future<Position?> fetchLatestPosition() async {
     try {
-      final response = await http.get(
-        Uri.parse('$_baseUrl/locations/$DEVICE_ID'),
-        headers: {'authorization': basicAuth},
-      );
+      final url = Uri.parse('$_baseUrl/track/$_deviceId');
+      final response = await http.get(url, headers: {
+        'Authorization': _buildAuthHeader(),
+        'Accept': 'application/json',
+      });
 
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
+        final data = json.decode(response.body);
+        final lat = double.tryParse(data['latitude'].toString());
+        final lng = double.tryParse(data['longitude'].toString());
 
-        // Assume the latest record is the last one
-        if (data is List && data.isNotEmpty) {
-          final latest = data.last;
-
-          final lat = double.tryParse(latest['latitude'].toString());
-          final lng = double.tryParse(latest['longitude'].toString());
-
-          if (lat != null && lng != null) {
-            return PositionModel(latitude: lat, longitude: lng);
-          }
+        if (lat != null && lng != null) {
+          return Position(latitude: lat, longitude: lng);
         }
       } else {
-        print("API Error: ${response.statusCode} ${response.body}");
+        debugprint('Failed to fetch location: ${response.statusCode}');
       }
     } catch (e) {
-      print("API Exception: $e");
+      debugprint('API Error: $e');
     }
 
     return null;
