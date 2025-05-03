@@ -1,7 +1,8 @@
+
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import '../services/api_services.dart';
+import '../services/api_service.dart';
 
 class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
@@ -11,7 +12,7 @@ class MapScreen extends StatefulWidget {
 
 class _MapScreenState extends State<MapScreen> {
   late GoogleMapController _mapController;
-  static const _campus = LatLng(28.8161453, 77.1335627);
+  static const _initial = LatLng(28.8161453, 77.1335627);
   Marker? _marker;
   Timer? _timer;
 
@@ -42,7 +43,7 @@ class _MapScreenState extends State<MapScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('Live EV Tracker')),
       body: GoogleMap(
-        initialCameraPosition: const CameraPosition(target: _campus, zoom: 16),
+        initialCameraPosition: const CameraPosition(target: _initial, zoom: 16),
         markers: _marker != null ? {_marker!} : {},
         onMapCreated: (c) => _mapController = c,
       ),
