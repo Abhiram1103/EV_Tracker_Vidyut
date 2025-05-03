@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "808075945408",
+    "project_id": "vidyut-15389",
+    "storage_bucket": "vidyut-15389.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:808075945408:android:2f6639b23639dcfd2a5425",
+        "android_client_info": {
+          "package_name": "com.example.ev_tracker_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA5mLaJ-_FvnrzXvBpPHSJTE4Lg39w2XMI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
