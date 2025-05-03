@@ -1,24 +1,41 @@
 import 'dart:convert';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
-import '../config/env.dart'; // loads BASE_URL, PHONE, PASSWORD, DEVICE_ID
 import '../models/position_model.dart';
+import '../config/env.dart'; // Make sure this file exists and exports your env vars
 
 class ApiService {
-  static final String _baseUrl = Env.baseUrl;
-  static String get _authHeader {
-    final creds = base64Encode(utf8.encode('${Env.phone}:${Env.password}'));
-    return 'Basic $creds';
-  }
+  static const _baseUrl = BASE_URL; // from env.dart
 
-  /// Fetches latest position from OneLap
-  static Future<Position?> fetchLatestPosition() async {
-    final url = Uri.parse('$_baseUrl/api/positions/latest?deviceId=${Env.deviceId}');
-    final resp = await http.get(url, headers: {'Authorization': _authHeader});
-    if (resp.statusCode == 200) {
-      final data = json.decode(resp.body) as Map<String, dynamic>;
-      return Position.fromJson(data);
+  static Future<PositionModel?> fetchLatestPosition() async {
+    final basicAuth = 'Basic ${base64Encode(utf8.encode('$PHONE:$PASSWORD'))}';
+
+    try {
+      final response = await http.get(
+        Uri.parse('$_baseUrl/locations/$DEVICE_ID'),
+        headers: {'authorization': basicAuth},
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+
+        // Assume the latest record is the last one
+        if (data is List && data.isNotEmpty) {
+          final latest = data.last;
+
+          final lat = double.tryParse(latest['latitude'].toString());
+          final lng = double.tryParse(latest['longitude'].toString());
+
+          if (lat != null && lng != null) {
+            return PositionModel(latitude: lat, longitude: lng);
+          }
+        }
+      } else {
+        print("API Error: ${response.statusCode} ${response.body}");
+      }
+    } catch (e) {
+      print("API Exception: $e");
     }
+
     return null;
   }
 }
