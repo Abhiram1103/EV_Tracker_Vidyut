@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
+import 'package:flutter/foundation.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 // Removed unused import for status codes
 import '../config/env.dart';
-import '../models/device.dart';
 
 class WebSocketService {
   static WebSocketChannel? _channel;
@@ -84,7 +84,7 @@ class WebSocketService {
   static void _onDone() {
     _isConnected = false;
     if (Env.enableDebugLogs) {
-      print('WebSocket connection closed');
+      debugPrint('WebSocket connection closed');
     }
     _scheduleReconnect();
   }
