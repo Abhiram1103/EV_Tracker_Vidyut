@@ -1,32 +1,28 @@
-
-// for onelap API 
-// lib/config/env.dart
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-
-/// A simple wrapper around dotenv so the rest of your app can just
-/// say Env.baseUrl, Env.phone, etc.
 class Env {
-  static String get baseUrl {
-    final v = dotenv.env['BASE_URL'];
-    if (v == null) throw Exception('BASE_URL not found in .env');
-    return v;
-  }
-
-  static String get phone {
-    final v = dotenv.env['ONELAP_PHONE'];
-    if (v == null) throw Exception('ONELAP_PHONE not found in .env');
-    return v;
-  }
-
-  static String get password {
-    final v = dotenv.env['ONELAP_PASSWORD'];
-    if (v == null) throw Exception('ONELAP_PASSWORD not found in .env');
-    return v;
-  }
-
-  static String get deviceId {
-    final v = dotenv.env['DEVICE_ID'];
-    if (v == null) throw Exception('DEVICE_ID not found in .env');
-    return v;
-  }
+  // Base URL for the API
+  static const String baseUrl = 'https://api.evtracker.example.com';
+  
+  // Credentials for Basic Auth
+  static const String phone = ''; // Set in your local development environment
+  static const String password = ''; // Set in your local development environment
+  
+  // Google Maps API Key
+  static const String mapsApiKey = ''; // Set in your local development environment
+  
+  // WebSocket configuration
+  static const String wsUrl = 'wss://ws.evtracker.example.com';
+  
+  // Other configuration
+  static const int connectionTimeout = 10; // Seconds
+  static const bool enableDebugLogs = true;
+  
+  // Feature flags
+  static const bool enableBackgroundTracking = true;
+  static const bool enableNotifications = true;
 }
+
+// Instructions:
+// 1. Create a copy of this file and name it 'env_local.dart'
+// 2. Fill in your values in 'env_local.dart'
+// 3. Make sure 'env_local.dart' is in your .gitignore file
+// 4. Import 'env_local.dart' instead of this file in your code

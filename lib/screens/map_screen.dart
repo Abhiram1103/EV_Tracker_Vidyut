@@ -1,51 +1,252 @@
-
-import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
-import '../services/api_service.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart' as maps;
+import 'dart:async';
+import 'package:ev_tracker_app/services/websocket_service.dart';
+import 'package:ev_tracker_app/models/user.dart';
 
+// Define the Constants class
+class Constants {
+  static const double initialLat = 37.7749; // San Francisco latitude
+  static const double initialLng = -122.4194; // San Francisco longitude
+  static const double initialZoom = 12.0; // Initial zoom level
+}
+class WebSocketService {
+  static final StreamController<Map<String, dynamic>> _controller =
+      StreamController<Map<String, dynamic>>.broadcast();
+
+  static Stream<Map<String, dynamic>> get realTimePositions => _controller.stream;
+
+  static Future<void> initialize() async {
+    // Simulate WebSocket initialization
+    await Future.delayed(Duration(seconds: 1));
+    // Simulate receiving data
+    Timer.periodic(Duration(seconds: 5), (timer) {
+      _controller.add({
+        'positions': [
+          {'latitude': 37.7749, 'longitude': -122.4194} // Example position
+        ]
+      });
+    });
+  }
+
+  static void dispose() {
+    _controller.close();
+  }
+}
 class MapScreen extends StatefulWidget {
-  const MapScreen({super.key});
+  final User user;
+  
+  const MapScreen({Key? key, required this.user}) : super(key: key);
+
   @override
-  State<MapScreen> createState() => _MapScreenState();
+  _MapScreenState createState() => _MapScreenState();
 }
 
 class _MapScreenState extends State<MapScreen> {
-  late GoogleMapController _mapController;
-  static const _initial = LatLng(28.8161453, 77.1335627);
-  Marker? _marker;
-  Timer? _timer;
+  late maps.GoogleMapController _mapController;
+  final Set<maps.Marker> _markers = {};
+  StreamSubscription? _wsSubscription;
+  bool _isLoading = true;
+  String _errorMessage = '';
 
   @override
   void initState() {
     super.initState();
-    _fetchAndMark();
-    _timer = Timer.periodic(const Duration(seconds: 5), (_) => _fetchAndMark());
+    _initWebSocket();
   }
 
-  Future<void> _fetchAndMark() async {
-    final pos = await ApiService.fetchLatestPosition();
-    if (pos != null) {
-      final point = LatLng(pos.latitude, pos.longitude);
-      setState(() => _marker = Marker(markerId: const MarkerId('veh'), position: point));
-      _mapController.animateCamera(CameraUpdate.newLatLng(point));
+  Future<void> _initWebSocket() async {
+    try {
+      setState(() {
+        _isLoading = true;
+        _errorMessage = '';
+      });
+      
+      await WebSocketService.initialize();
+      
+      _wsSubscription = WebSocketService.realTimePositions.listen(
+        (data) {
+          final positions = data['positions'];
+          if (positions != null && positions.isNotEmpty) {
+            final position = positions.first;
+            if (position != null) {
+              _updateMarker(maps.LatLng(
+                position['latitude'] as double,
+                position['longitude'] as double,
+              ));
+            }
+          }
+        },
+        onError: (error) {
+          setState(() {
+            _errorMessage = 'Connection error: $error';
+            _isLoading = false;
+          });
+        },
+      );
+      
+      setState(() {
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'Failed to initialize connection: $e';
+        _isLoading = false;
+      });
     }
+  }
+
+  void _updateMarker(maps.LatLng position) {
+    if (!mounted) return;
+    
+    setState(() {
+      _markers.clear();
+      _markers.add(maps.Marker(
+        markerId: const maps.MarkerId('ev'),
+        position: position,
+        icon: maps.BitmapDescriptor.defaultMarkerWithHue(maps.BitmapDescriptor.hueAzure),
+        infoWindow: const maps.InfoWindow(
+          title: 'EV Location',
+          snippet: 'Current position of your vehicle',
+        ),
+      ));
+      
+      // Smoothly animate to the new position
+      _mapController.animateCamera(maps.CameraUpdate.newLatLng(position));
+    });
+  }
+
+  void _refreshConnection() async {
+    _wsSubscription?.cancel();
+    await _initWebSocket();
   }
 
   @override
   void dispose() {
-    _timer?.cancel();
+    _wsSubscription?.cancel();
+    _mapController.dispose();
+    WebSocketService.dispose();
     super.dispose();
   }
 
   @override
-  Widget build(BuildContext ctx) {
+  Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Live EV Tracker')),
-      body: GoogleMap(
-        initialCameraPosition: const CameraPosition(target: _initial, zoom: 16),
-        markers: _marker != null ? {_marker!} : {},
-        onMapCreated: (c) => _mapController = c,
+      appBar: AppBar(
+        title: const Text('Live EV Tracker'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: _refreshConnection,
+            tooltip: 'Refresh connection',
+          ),
+          PopupMenuButton<String>(
+            onSelected: (value) {
+              if (value == 'logout') {
+                // Handle logout
+                Navigator.of(context).pushReplacementNamed('/login');
+              } else if (value == 'profile') {
+                // Navigate to profile page
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Profile for ${widget.user.name}')),
+                );
+              }
+            },
+            itemBuilder: (BuildContext context) => [
+              PopupMenuItem<String>(
+                value: 'profile',
+                child: Row(
+                  children: const [
+                    Icon(Icons.person),
+                    SizedBox(width: 8),
+                    Text('Profile'),
+                  ],
+                ),
+              ),
+              PopupMenuItem<String>(
+                value: 'logout',
+                child: Row(
+                  children: const [
+                    Icon(Icons.logout),
+                    SizedBox(width: 8),
+                    Text('Logout'),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+      body: Stack(
+        children: [
+          maps.GoogleMap(
+            initialCameraPosition: const maps.CameraPosition(
+              target: maps.LatLng(Constants.initialLat, Constants.initialLng),
+              zoom: Constants.initialZoom,
+            ),
+            markers: _markers,
+            myLocationEnabled: true,
+            myLocationButtonEnabled: true,
+            mapToolbarEnabled: true,
+            compassEnabled: true,
+            onMapCreated: (controller) {
+              _mapController = controller;
+              // Optional: Change map style here
+              // controller.setMapStyle(mapStyle);
+            },
+          ),
+          if (_isLoading)
+            const Center(
+              child: Card(
+                child: Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      CircularProgressIndicator(),
+                      SizedBox(height: 16),
+                      Text('Connecting to vehicle...'),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          if (_errorMessage.isNotEmpty)
+            Positioned(
+              bottom: 20,
+              left: 20,
+              right: 20,
+              child: Card(
+                color: Colors.red[100],
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        _errorMessage,
+                        style: const TextStyle(color: Colors.red),
+                      ),
+                      TextButton(
+                        onPressed: _refreshConnection,
+                        child: const Text('Retry'),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          _mapController.animateCamera(maps.CameraUpdate.newLatLngZoom(
+            maps.LatLng(Constants.initialLat, Constants.initialLng),
+            Constants.initialZoom,
+          ));
+        },
+        child: const Icon(Icons.home),
+        tooltip: 'Return to initial position',
       ),
     );
   }
