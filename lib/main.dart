@@ -1,20 +1,12 @@
+import 'screens/map_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'screens/login_screen.dart';
 import 'screens/home_screen.dart';
-import 'screens/map_screen.dart';
-import 'services/auth_services.dart';
-import 'services/api_services.dart';
-import 'services/websocket_service.dart' as websocket_service;
-
+import 'screens/signup_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
-
-  // Initialize shared services
-  ApiService.initialize();
-  websocket_service.WebSocketService.initialize();
-
   runApp(MyApp());
 }
 
@@ -28,19 +20,10 @@ class MyApp extends StatelessWidget {
       initialRoute: '/login',
       routes: {
         '/login': (context) => LoginScreen(),
+        '/Signup': (context) => SignUpScreen(),
+
         '/home': (context) => HomeScreen(),
-        '/map': (context) => MapScreen(
-              user: AuthService.currentUser!,
-              deviceId: AuthService.currentDeviceId!,
-            ),
-      },
-      onGenerateRoute: (settings) {
-        // Handle deep links or special routes
-        return MaterialPageRoute(
-          builder: (context) => const Scaffold(
-            body: Center(child: Text('Page not found')),
-          ),
-        );
+        '/Map' : (context) => MapScreen(),
       },
     );
   }

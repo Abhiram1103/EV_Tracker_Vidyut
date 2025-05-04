@@ -1,15 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart' as maps;
 import 'dart:async';
-// import 'package:ev_tracker_app/services/websocket_service.dart'; // Remove if unused
-import 'package:ev_tracker_app/models/user.dart';
+import '../models/user.dart';
 import '../config/constants.dart';
-import '../services/auth_services.dart';
 
-
+// Simulated WebSocket service
 class WebSocketService {
   static final StreamController<Map<String, dynamic>> _controller =
-      StreamController<Map<String, dynamic>>.broadcast();
+  StreamController<Map<String, dynamic>>.broadcast();
 
   static Stream<Map<String, dynamic>> get realTimePositions =>
       _controller.stream;
@@ -17,8 +15,9 @@ class WebSocketService {
   static Future<void> initialize() async {
     // Simulate WebSocket initialization
     await Future.delayed(Duration(seconds: 1));
-    // Simulate receiving data
-    Timer.periodic(Duration(seconds: 5), (timer) {
+
+    // Simulate receiving real-time data
+    Timer.periodic(const Duration(seconds: 5), (timer) {
       _controller.add({
         'positions': [
           {'latitude': 28.8161453, 'longitude': 77.1335627},
@@ -33,42 +32,12 @@ class WebSocketService {
 }
 
 class MapScreen extends StatefulWidget {
-  final User user;
-  final String deviceId;
-
-  const MapScreen({super.key, required this.user, required this.deviceId});
-
   @override
   MapScreenState createState() => MapScreenState();
 }
 
 class MapScreenState extends State<MapScreen> {
-  void showLogoutDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Confirm Logout'),
-        content: const Text('Are you sure you want to logout?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () async {
-              await AuthService.logout();
-              Navigator.of(context).pushNamedAndRemoveUntil(
-                '/login', 
-                (Route<dynamic> route) => false
-              );
-            },
-            child: const Text('Logout', style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
-    );
-  }
-  late maps.GoogleMapController _mapController;
+  maps.GoogleMapController? _mapController;
   final Set<maps.Marker> _markers = {};
   StreamSubscription? _wsSubscription;
   bool _isLoading = true;
@@ -90,7 +59,7 @@ class MapScreenState extends State<MapScreen> {
       await WebSocketService.initialize();
 
       _wsSubscription = WebSocketService.realTimePositions.listen(
-        (data) {
+            (data) {
           final positions = data['positions'];
           if (positions != null && positions.isNotEmpty) {
             final position = positions.first;
@@ -141,10 +110,11 @@ class MapScreenState extends State<MapScreen> {
           ),
         ),
       );
-
-      // Smoothly animate to the new position
-      _mapController.animateCamera(maps.CameraUpdate.newLatLng(position));
     });
+
+    _mapController?.animateCamera(
+      maps.CameraUpdate.newLatLng(position),
+    );
   }
 
   void _refreshConnection() async {
@@ -155,7 +125,7 @@ class MapScreenState extends State<MapScreen> {
   @override
   void dispose() {
     _wsSubscription?.cancel();
-    _mapController.dispose();
+    _mapController?.dispose();
     WebSocketService.dispose();
     super.dispose();
   }
@@ -174,38 +144,35 @@ class MapScreenState extends State<MapScreen> {
           PopupMenuButton<String>(
             onSelected: (value) {
               if (value == 'logout') {
-                // Handle logout
                 Navigator.of(context).pushReplacementNamed('/login');
               } else if (value == 'profile') {
-                // Navigate to profile page
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Profile for ${widget.user.name}')),
+                  const SnackBar(content: Text('Profile option tapped')),
                 );
               }
             },
-            itemBuilder:
-                (BuildContext context) => [
-                  PopupMenuItem<String>(
-                    value: 'profile',
-                    child: Row(
-                      children: const [
-                        Icon(Icons.person),
-                        SizedBox(width: 8),
-                        Text('Profile'),
-                      ],
-                    ),
-                  ),
-                  PopupMenuItem<String>(
-                    value: 'logout',
-                    child: Row(
-                      children: const [
-                        Icon(Icons.logout),
-                        SizedBox(width: 8),
-                        Text('Logout'),
-                      ],
-                    ),
-                  ),
-                ],
+            itemBuilder: (BuildContext context) => [
+              const PopupMenuItem<String>(
+                value: 'profile',
+                child: Row(
+                  children: [
+                    Icon(Icons.person),
+                    SizedBox(width: 8),
+                    Text('Profile'),
+                  ],
+                ),
+              ),
+              const PopupMenuItem<String>(
+                value: 'logout',
+                child: Row(
+                  children: [
+                    Icon(Icons.logout),
+                    SizedBox(width: 8),
+                    Text('Logout'),
+                  ],
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -223,8 +190,6 @@ class MapScreenState extends State<MapScreen> {
             compassEnabled: true,
             onMapCreated: (controller) {
               _mapController = controller;
-              // Optional: Change map style here
-              // controller.setMapStyle(mapStyle);
             },
           ),
           if (_isLoading)
@@ -272,7 +237,7 @@ class MapScreenState extends State<MapScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          _mapController.animateCamera(
+          _mapController?.animateCamera(
             maps.CameraUpdate.newLatLngZoom(
               maps.LatLng(Constants.initialLat, Constants.initialLng),
               Constants.initialZoom,

@@ -1,15 +1,8 @@
-// Home Screen
 import 'package:flutter/material.dart';
 import 'dart:async';
-import '../services/auth_services.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
-
-  void _selectDevice(BuildContext context, String deviceId) {
-    AuthService.currentDeviceId = deviceId;
-    Navigator.pushNamed(context, '/map');
-  }
 
   final List<Map<String, dynamic>> classes = const [
     {'title': 'Vaahan 1', 'image': 'assets/images/ev1.png'},
@@ -66,11 +59,18 @@ class HomeScreen extends StatelessWidget {
               padding: EdgeInsets.all(screenWidth * 0.04),
               itemCount: classes.length,
               itemBuilder: (context, index) {
-                return CourseCard(
-                  title: classes[index]['title'],
-                  imagePath: classes[index]['image'],
-                  colorIndex: index,
-                  onTap: () => _selectDevice(context, classes[index]['title']),
+                final item = classes[index];
+                return GestureDetector(
+                  onTap: () {
+                    if (item['title'] == 'Vaahan 1') {
+                      Navigator.pushNamed(context, '/Map');
+                    }
+                  },
+                  child: CourseCard(
+                    title: item['title'],
+                    imagePath: item['image'],
+                    colorIndex: index,
+                  ),
                 );
               },
             ),
@@ -91,13 +91,11 @@ class CourseCard extends StatelessWidget {
   final String title;
   final String imagePath;
   final int colorIndex;
-  final VoidCallback onTap;
 
   const CourseCard({
     required this.title,
     required this.imagePath,
     required this.colorIndex,
-    required this.onTap,
     super.key,
   });
 
@@ -112,58 +110,57 @@ class CourseCard extends StatelessWidget {
         horizontal: screenWidth * 0.02,
       ),
       elevation: 12,
-      child: InkWell(
-        onTap: onTap,
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(screenWidth * 0.04),
-        child: Container(
-          height: screenHeight * 0.16,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(screenWidth * 0.04),
-            gradient: LinearGradient(
-              begin: Alignment.centerLeft,
-              end: Alignment.centerRight,
-              colors: [
-                const Color.fromARGB(255, 209, 226, 252),
-                Color.fromARGB(
-                  255,
-                  (137 + (colorIndex * 20)).clamp(137, 255),
-                  245,
-                  255,
-                ),
-                Color.fromARGB(
-                  255,
-                  (50 + (colorIndex * 10)).clamp(50, 255),
-                  109,
-                  168,
-                ),
-              ],
-            ),
+      ),
+      child: Container(
+        height: screenHeight * 0.16,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(screenWidth * 0.04),
+          gradient: LinearGradient(
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
+            colors: [
+              const Color.fromARGB(255, 209, 226, 252),
+              Color.fromARGB(
+                255,
+                (137 + (colorIndex * 20)).clamp(137, 255),
+                245,
+                255,
+              ),
+              Color.fromARGB(
+                255,
+                (50 + (colorIndex * 10)).clamp(50, 255),
+                109,
+                168,
+              ),
+            ],
           ),
-          child: Padding(
-            padding: EdgeInsets.all(screenWidth * 0.04),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    title,
-                    style: TextStyle(
-                      fontSize: screenWidth * 0.055,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
-                    ),
+        ),
+        child: Padding(
+          padding: EdgeInsets.all(screenWidth * 0.04),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: screenWidth * 0.055,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
                   ),
                 ),
-                SizedBox(width: screenWidth * 0.05),
-                Image.asset(
-                  imagePath,
-                  height: screenWidth * 0.3,
-                  width: screenWidth * 0.3,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) =>
-                      Icon(Icons.ev_station, size: screenWidth * 0.3),
-                ),
-              ],
-            ),
+              ),
+              SizedBox(width: screenWidth * 0.05),
+              Image.asset(
+                imagePath,
+                height: screenWidth * 0.3,
+                width: screenWidth * 0.3,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) =>
+                    Icon(Icons.ev_station, size: screenWidth * 0.3),
+              ),
+            ],
           ),
         ),
       ),
