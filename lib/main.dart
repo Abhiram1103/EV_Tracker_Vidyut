@@ -18,7 +18,7 @@ class ClassroomApp extends StatelessWidget {
 }
 
 class ImageCarousel extends StatefulWidget {
-  const ImageCarousel({Key? key}) : super(key: key);
+  const ImageCarousel({super.key});
 
   @override
   State<ImageCarousel> createState() => _ImageCarouselState();
