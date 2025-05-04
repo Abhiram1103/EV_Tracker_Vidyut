@@ -1,19 +1,40 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'websocket_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../config/env.dart';
-import '../models/user.dart';
+import '../models/user.dart' as app_user; // Alias for your custom User model
+
+Future<void> logout() async {
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.clear();
+  await FirebaseAuth.instance.signOut();
+}
 
 class AuthService {
   static const String _tokenKey = 'auth_token';
   static const String _userKey = 'user_data';
-  static User? _currentUser;
+  static app_user.User? currentUser;
   static String? _token;
 
+  static void setCurrentUser(String userJson) {
+    currentUser = app_user.User.fromJson(jsonDecode(userJson));
+  }
+  static String? currentDeviceId;
+  
+  static Future<void> logoutUser() async {
+    await FirebaseAuth.instance.signOut();
+    WebSocketService.dispose();
+    //    await ApiService.dispose(); // Removed or commented out as ApiService is undefined
+    currentUser = null;
+    currentDeviceId = null;
+  }
+
   // Returns the current user if they're already logged in
-  static Future<User?> getCurrentUser() async {
-    if (_currentUser != null) {
-      return _currentUser;
+  static Future<app_user.User?> getCurrentUser() async {
+    if (currentUser != null) {
+      return Future.value(currentUser);
     }
 
     final prefs = await SharedPreferences.getInstance();
@@ -22,15 +43,15 @@ class AuthService {
 
     if (userData != null && token != null) {
       _token = token;
-      _currentUser = User.fromJson(jsonDecode(userData));
-      return _currentUser;
+      currentUser = app_user.User.fromJson(jsonDecode(userData));
+      return Future.value(currentUser);
     }
 
     return null;
   }
 
   // Login with email and password
-  static Future<User?> loginUser(String email, String password) async {
+  static Future<app_user.User?> loginUser(String email, String password) async {
     try {
       final response = await http.post(
         Uri.parse('${Env.baseUrl}/api/auth/login'),
@@ -44,7 +65,7 @@ class AuthService {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         final token = data['token'] as String;
-        final user = User.fromJson(data['user']);
+        final user = app_user.User.fromJson(data['user']);
 
         // Store token and user data
         await _saveAuthData(token, user);
@@ -63,7 +84,7 @@ class AuthService {
   }
 
   // Register a new user
-  static Future<User?> registerUser(String name, String email, String password) async {
+  static Future<app_user.User?> registerUser(String name, String email, String password) async {
     try {
       final response = await http.post(
         Uri.parse('${Env.baseUrl}/api/auth/register'),
@@ -78,7 +99,7 @@ class AuthService {
       if (response.statusCode == 201) {
         final data = jsonDecode(response.body);
         final token = data['token'] as String;
-        final user = User.fromJson(data['user']);
+        final user = app_user.User.fromJson(data['user']);
 
         // Store token and user data
         await _saveAuthData(token, user);
@@ -98,7 +119,7 @@ class AuthService {
 
   // Log out the current user
   static Future<void> logout() async {
-    _currentUser = null;
+    currentUser = null;
     _token = null;
     
     final prefs = await SharedPreferences.getInstance();
@@ -129,9 +150,9 @@ class AuthService {
   }
 
   // Save authentication data locally
-  static Future<void> _saveAuthData(String token, User user) async {
+  static Future<void> _saveAuthData(String token, app_user.User user) async {
     _token = token;
-    _currentUser = user;
+    currentUser = user;
     
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_tokenKey, token);

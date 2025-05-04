@@ -4,6 +4,7 @@ import 'dart:async';
 // import 'package:ev_tracker_app/services/websocket_service.dart'; // Remove if unused
 import 'package:ev_tracker_app/models/user.dart';
 import '../config/constants.dart';
+import '../services/auth_services.dart';
 
 
 class WebSocketService {
@@ -33,14 +34,40 @@ class WebSocketService {
 
 class MapScreen extends StatefulWidget {
   final User user;
+  final String deviceId;
 
-  const MapScreen({super.key, required this.user});
+  const MapScreen({super.key, required this.user, required this.deviceId});
 
   @override
   MapScreenState createState() => MapScreenState();
 }
 
 class MapScreenState extends State<MapScreen> {
+  void showLogoutDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Confirm Logout'),
+        content: const Text('Are you sure you want to logout?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              await AuthService.logout();
+              Navigator.of(context).pushNamedAndRemoveUntil(
+                '/login', 
+                (Route<dynamic> route) => false
+              );
+            },
+            child: const Text('Logout', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+  }
   late maps.GoogleMapController _mapController;
   final Set<maps.Marker> _markers = {};
   StreamSubscription? _wsSubscription;

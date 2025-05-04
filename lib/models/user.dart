@@ -15,6 +15,17 @@ class User {
     this.vehicleIds,
   });
 
+  factory User.fromFirebaseUser(dynamic firebaseUser) {
+    return User(
+      id: firebaseUser.uid,
+      email: firebaseUser.email,
+      name: firebaseUser.displayName ?? '',
+      photoUrl: firebaseUser.photoURL,
+      createdAt: DateTime.now(),
+      vehicleIds: [],
+    );
+  }
+
   // Create a User from JSON data
   factory User.fromJson(Map<String, dynamic> json) {
     return User(

@@ -1,26 +1,31 @@
 import 'package:flutter/material.dart';
-import '../services/auth_services.dart';
-import 'map_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart'; // Add this import for FirebaseAuthException
+import 'dart:async'; // Import for Timer
+import 'package:ev_tracker_app/services/auth_services.dart';
+import 'package:ev_tracker_app/models/user.dart' as app_user;
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
   @override
-  LoginScreenState createState() => LoginScreenState();
+  State<LoginScreen> createState() => _LoginScreenState();
 }
 
-class LoginScreenState extends State<LoginScreen> {
+class _LoginScreenState extends State<LoginScreen> {
+  // Removed unused _auth field
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  
+
   bool _isRegistering = false;
   bool _isLoading = false;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
-  String _errorMessage = '';
+  String? _errorMessage;
+  final primaryColor = const Color(0xFF005bFF);
+  final accentColor = const Color(0xFF7FB2FF);
 
   @override
   void dispose() {
@@ -32,102 +37,70 @@ class LoginScreenState extends State<LoginScreen> {
   }
 
   String? _validateEmail(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Email is required';
-    }
-    final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
-    if (!emailRegex.hasMatch(value)) {
+    if (value == null || value.isEmpty) return 'Email is required';
+    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
       return 'Enter a valid email address';
     }
     return null;
   }
 
   String? _validatePassword(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Password is required';
-    }
-    if (value.length < 6) {
-      return 'Password must be at least 6 characters';
-    }
+    if (value == null || value.isEmpty) return 'Password is required';
+    if (value.length < 6) return 'Password must be at least 6 characters';
     return null;
   }
 
   String? _validateConfirmPassword(String? value) {
-    if (_isRegistering) {
-      if (value == null || value.isEmpty) {
-        return 'Please confirm your password';
-      }
-      if (value != _passwordController.text) {
-        return 'Passwords do not match';
-      }
+    if (_isRegistering && value != _passwordController.text) {
+      return 'Passwords do not match';
     }
     return null;
   }
 
   String? _validateName(String? value) {
-    if (_isRegistering) {
-      if (value == null || value.isEmpty) {
-        return 'Name is required';
-      }
-      if (value.length < 2) {
-        return 'Name is too short';
-      }
+    if (_isRegistering && (value == null || value.isEmpty)) {
+      return 'Name is required';
     }
     return null;
   }
 
   Future<void> _handleAuth() async {
+    if (!_formKey.currentState!.validate()) return;
+
     setState(() {
-      _errorMessage = '';
+      _isLoading = true;
+      _errorMessage = null;
     });
 
-    if (_formKey.currentState!.validate()) {
-      try {
-        setState(() {
-          _isLoading = true;
-        });
+    try {
+      final user = _isRegistering
+          ? await AuthService.registerUser(
+              _nameController.text,
+              _emailController.text,
+              _passwordController.text,
+            )
+          : await AuthService.loginUser(
+              _emailController.text,
+              _passwordController.text,
+            );
 
-        final user = _isRegistering
-            ? await AuthService.registerUser(
-                _nameController.text,
-                _emailController.text,
-                _passwordController.text,
-              )
-            : await AuthService.loginUser(
-                _emailController.text,
-                _passwordController.text,
-              );
-
-        setState(() {
-          _isLoading = false;
-        });
-
-        if (user != null) {
-          if (!mounted) return;
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(
-              builder: (context) => MapScreen(user: user),
-            ),
-          );
-        } else {
-          setState(() {
-            _errorMessage = 'Authentication failed. Please try again.';
-          });
-        }
-      } catch (e) {
-        setState(() {
-          _isLoading = false;
-          _errorMessage = e.toString();
-        });
+      if (user != null && mounted) {
+        AuthService.currentUser = app_user.User.fromFirebaseUser(user);
+        Navigator.pushReplacementNamed(context, '/home');
       }
+    } on FirebaseAuthException catch (e) {
+      setState(() => _errorMessage = e.message);
+    } catch (e) {
+      setState(() => _errorMessage = 'Authentication failed. Please try again.');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
   void _toggleFormMode() {
     setState(() {
       _isRegistering = !_isRegistering;
-      _errorMessage = '';
-      // Clear password fields when switching modes
+      _errorMessage = null;
       _passwordController.clear();
       _confirmPasswordController.clear();
     });
@@ -136,206 +109,273 @@ class LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(_isRegistering ? 'Create Account' : 'EV Tracker Login'),
-        elevation: 2,
-      ),
-      body: Center(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xFFF8FAFF), Color(0xFFE6F0FF)],
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 30),
+          child: SingleChildScrollView(
             child: Form(
               key: _formKey,
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // App logo or image
-                  Icon(
-                    Icons.electric_car,
-                    size: 80,
-                    color: Theme.of(context).primaryColor,
+                  const SizedBox(height: 60),
+                  Column(
+                    children: [
+                      const SizedBox(height: 80),
+                      TypewriterCyclingText(
+                        words: const ['Vidhyut', 'विद्युत', 'విద్యుత్'],
+                        style: const TextStyle(
+                            fontSize: 25, fontWeight: FontWeight.bold),
+                        speed: const Duration(milliseconds: 100),
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        _isRegistering
+                            ? 'Create new account'
+                            : 'Sign in to continue',
+                        style: const TextStyle(fontSize: 16, color: Colors.grey),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 24),
-                  
-                  Text(
-                    _isRegistering ? 'Create a new account' : 'Welcome back',
-                    style: Theme.of(context).textTheme.headlineSmall,
-                    textAlign: TextAlign.center,
-                  ),
-                  
-                  const SizedBox(height: 24),
-                  
-                  // Name field (only for registration)
+                  const SizedBox(height: 40),
+                  if (_errorMessage != null) ...[
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 300),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.red.shade50,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.error_outline, color: Colors.red),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(_errorMessage!,
+                                style: const TextStyle(color: Colors.red)),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                  ],
                   if (_isRegistering)
                     TextFormField(
                       controller: _nameController,
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         labelText: 'Full Name',
-                        prefixIcon: Icon(Icons.person),
-                        border: OutlineInputBorder(),
+                        prefixIcon: const Icon(Icons.person_outline,
+                            color: Color(0xFF005bFF)),
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10)),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: const BorderSide(
+                              color: Color(0xFF005bFF), width: 2),
+                        ),
                       ),
-                      textInputAction: TextInputAction.next,
                       validator: _validateName,
-                      keyboardType: TextInputType.name,
                       textCapitalization: TextCapitalization.words,
                     ),
-                  
-                  if (_isRegistering) const SizedBox(height: 16),
-                  
-                  // Email field
+                  if (_isRegistering) const SizedBox(height: 20),
                   TextFormField(
                     controller: _emailController,
-                    decoration: const InputDecoration(
-                      labelText: 'Email',
-                      prefixIcon: Icon(Icons.email),
-                      border: OutlineInputBorder(),
-                    ),
-                    textInputAction: TextInputAction.next,
-                    validator: _validateEmail,
-                    keyboardType: TextInputType.emailAddress,
-                    autocorrect: false,
-                  ),
-                  
-                  const SizedBox(height: 16),
-                  
-                  // Password field
-                  TextFormField(
-                    controller: _passwordController,
                     decoration: InputDecoration(
-                      labelText: 'Password',
-                      prefixIcon: const Icon(Icons.lock),
-                      border: const OutlineInputBorder(),
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _obscurePassword ? Icons.visibility : Icons.visibility_off,
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            _obscurePassword = !_obscurePassword;
-                          });
-                        },
+                      labelText: 'Email',
+                      prefixIcon: const Icon(Icons.email_outlined,
+                          color: Color(0xFF005bFF)),
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10)),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(
+                            color: Color(0xFF005bFF), width: 2),
                       ),
                     ),
-                    obscureText: _obscurePassword,
-                    validator: _validatePassword,
-                    textInputAction: _isRegistering ? TextInputAction.next : TextInputAction.done,
+                    validator: _validateEmail,
+                    keyboardType: TextInputType.emailAddress,
                   ),
-                  
-                  // Confirm password field (only for registration)
-                  if (_isRegistering) const SizedBox(height: 16),
+                  const SizedBox(height: 20),
+                  TextFormField(
+                    controller: _passwordController,
+                    obscureText: _obscurePassword,
+                    decoration: InputDecoration(
+                      labelText: 'Password',
+                      prefixIcon: const Icon(Icons.lock_outline,
+                          color: Color(0xFF005bFF)),
+                      suffixIcon: IconButton(
+                        icon: Icon(_obscurePassword
+                            ? Icons.visibility_outlined
+                            : Icons.visibility_off),
+                        onPressed: () =>
+                            setState(() => _obscurePassword = !_obscurePassword),
+                      ),
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10)),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(
+                            color: Color(0xFF005bFF), width: 2),
+                      ),
+                    ),
+                    validator: _validatePassword,
+                  ),
+                  if (_isRegistering) const SizedBox(height: 20),
                   if (_isRegistering)
                     TextFormField(
                       controller: _confirmPasswordController,
+                      obscureText: _obscureConfirmPassword,
                       decoration: InputDecoration(
                         labelText: 'Confirm Password',
-                        prefixIcon: const Icon(Icons.lock_outline),
-                        border: const OutlineInputBorder(),
+                        prefixIcon: const Icon(Icons.lock_outline,
+                            color: Color(0xFF005bFF)),
                         suffixIcon: IconButton(
-                          icon: Icon(
-                            _obscureConfirmPassword ? Icons.visibility : Icons.visibility_off,
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              _obscureConfirmPassword = !_obscureConfirmPassword;
-                            });
-                          },
+                          icon: Icon(_obscureConfirmPassword
+                              ? Icons.visibility_outlined
+                              : Icons.visibility_off),
+                          onPressed: () => setState(
+                              () => _obscureConfirmPassword = !_obscureConfirmPassword),
+                        ),
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10)),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: const BorderSide(
+                              color: Color(0xFF005bFF), width: 2),
                         ),
                       ),
-                      obscureText: _obscureConfirmPassword,
                       validator: _validateConfirmPassword,
-                      textInputAction: TextInputAction.done,
                     ),
-                  
-                  const SizedBox(height: 8),
-                  
-                  // Forgot password button (only for login)
-                  if (!_isRegistering)
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: TextButton(
-                        onPressed: () {
-                          // Implement forgot password functionality
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Forgot password feature coming soon'),
-                            ),
-                          );
-                        },
-                        child: const Text('Forgot Password?'),
-                      ),
-                    ),
-                  
-                  const SizedBox(height: 16),
-                  
-                  // Error message
-                  if (_errorMessage.isNotEmpty)
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: Colors.red[50],
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        _errorMessage,
-                        style: const TextStyle(color: Colors.red),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                  
-                  if (_errorMessage.isNotEmpty) const SizedBox(height: 16),
-                  
-                  // Submit button
-                  ElevatedButton(
-                    onPressed: _isLoading ? null : _handleAuth,
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
+                  const SizedBox(height: 30),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
                     child: _isLoading
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
+                        ? const Center(
+                            child:
+                                CircularProgressIndicator(color: Color(0xFF005bFF)))
+                        : ElevatedButton(
+                            onPressed: _handleAuth,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: primaryColor,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              elevation: 6,
+                              shadowColor: accentColor,
                             ),
-                          )
-                        : Text(
-                            _isRegistering ? 'Create Account' : 'Sign In',
-                            style: const TextStyle(fontSize: 16),
+                            child: Text(_isRegistering ? 'Create Account' : 'Sign In'),
                           ),
                   ),
-                  
-                  const SizedBox(height: 16),
-                  
-                  // Toggle between login and register
+                  const SizedBox(height: 20),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(_isRegistering
-                          ? 'Already have an account?'
-                          : 'Don\'t have an account?'),
+                          ? 'Already have an account? '
+                          : 'Don\'t have an account? '),
                       TextButton(
-                        onPressed: _isLoading ? null : _toggleFormMode,
+                        onPressed: _toggleFormMode,
                         child: Text(
                           _isRegistering ? 'Sign In' : 'Sign Up',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Theme.of(context).primaryColor,
-                          ),
+                          style: const TextStyle(color: Color(0xFF005bFF)),
                         ),
                       ),
                     ],
                   ),
+                  const SizedBox(height: 30),
                 ],
               ),
             ),
           ),
         ),
       ),
+    );
+  }
+}
+
+class TypewriterCyclingText extends StatefulWidget {
+  final List<String> words;
+  final TextStyle style;
+  final Duration speed;
+
+  const TypewriterCyclingText({
+    super.key,
+    required this.words,
+    required this.style,
+    this.speed = const Duration(milliseconds: 100),
+  });
+
+  @override
+  State<TypewriterCyclingText> createState() => _TypewriterCyclingTextState();
+}
+
+class _TypewriterCyclingTextState extends State<TypewriterCyclingText> {
+  late String _currentText;
+  int _charIndex = 0;
+  int _wordIndex = 0;
+  Timer? _typingTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentText = '';
+    _startTyping();
+  }
+
+  void _startTyping() {
+    _typingTimer = Timer.periodic(widget.speed, (timer) {
+      if (_charIndex < widget.words[_wordIndex].length) {
+        setState(() => _currentText += widget.words[_wordIndex][_charIndex++]);
+      } else {
+        timer.cancel();
+        Future.delayed(const Duration(seconds: 2), () {
+          setState(() {
+            _wordIndex = (_wordIndex + 1) % widget.words.length;
+            _charIndex = 0;
+            _currentText = '';
+            _startTyping();
+          });
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _typingTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Text.rich(
+      TextSpan(
+        children: [
+          const TextSpan(text: 'Welcome to '),
+          TextSpan(
+            text: _currentText,
+            style: widget.style.copyWith(color: const Color(0xFF005bFF)),
+          ),
+          TextSpan(
+            text: '|',
+            style: widget.style.copyWith(
+              color: (_currentText.length == widget.words[_wordIndex].length)
+                  ? Colors.transparent
+                  : const Color(0xFF005bFF),
+            ),
+          ),
+        ],
+      ),
+      style: widget.style,
     );
   }
 }

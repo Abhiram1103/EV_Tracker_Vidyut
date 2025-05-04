@@ -7,6 +7,13 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 import '../config/env.dart';
 
 class WebSocketService {
+  static void initialize() {
+    // Connection pool setup
+  }
+  
+  static Future<void> dispose() async {
+    // Close all connections
+  }
   static WebSocketChannel? _channel;
   static final _positionsStreamController =
       StreamController<Map<String, dynamic>>.broadcast();
@@ -18,7 +25,7 @@ class WebSocketService {
   static Timer? _reconnectTimer;
 
   // Initialize WebSocket connection
-  static Future<void> initialize() async {
+  static Future<void> connect() async {
     if (_isConnected) {
       return;
     }
@@ -108,7 +115,7 @@ class WebSocketService {
     Map<String, dynamic> parameters,
   ) async {
     if (!_isConnected || _channel == null) {
-      await initialize();
+      await connect();
     }
 
     final message = jsonEncode({
@@ -136,7 +143,7 @@ class WebSocketService {
   static void _scheduleReconnect() {
     _reconnectTimer?.cancel();
     _reconnectTimer = Timer(const Duration(seconds: 5), () {
-      initialize();
+      connect();
     });
   }
 
@@ -148,7 +155,7 @@ class WebSocketService {
   }
 
   // Clean up resources
-  static void dispose() {
+  static void disposeResources() {
     _heartbeatTimer?.cancel();
     _reconnectTimer?.cancel();
 

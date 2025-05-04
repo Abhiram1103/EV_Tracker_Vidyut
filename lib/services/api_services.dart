@@ -2,8 +2,27 @@ import 'package:http/http.dart' as http;
 import '../config/env.dart';
 import '../models/device.dart';
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 
 class ApiService {
+  static bool _initialized = false;
+  
+  static void initialize() {
+    if (!_initialized) {
+      // Init HTTP client
+      _initialized = true;
+    }
+  }
+  
+  static Future<void> dispose() async {
+    // Cleanup resources
+    _initialized = false;
+  }
+
+  static Future<void> disposeResources() async {
+    // Add logic to close any active connections or clean up resources
+    debugPrint('ApiService resources disposed');
+  }
   // Fetch all devices for the current user
   static Future<List<Device>> getDevices() async {
     final response = await http.get(

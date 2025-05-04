@@ -3,8 +3,10 @@ class Env {
   static const String baseUrl = 'https://web.onelap.in';
   
   // Credentials for Basic Auth
-  static const String phone = '8295415268'; // Set in your local development environment
-  static const String password = 'Gufran@82954'; // Set in your local development environment
+   // Set in your local development environment
+  static const String username = String.fromEnvironment('ONELAP_USERNAME'); // Set in your local development environment
+  static const String phone = String.fromEnvironment('ONELAP_PHONE');
+  static const String password = String.fromEnvironment('ONELAP_PASSWORD');
   
   // Google Maps API Key
   static const String mapsApiKey = 'AIzaSyAxdfHJHJEGrh5GkcyfJLTeuaIZyJxCjPI'; // Set in your local development environment
