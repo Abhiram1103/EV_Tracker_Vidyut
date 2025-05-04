@@ -1,6 +1,7 @@
 //import 'package:app1/gradient_container.dart';
+import 'dart:async'; // Add this line with other imports
 import 'package:flutter/material.dart';
-
+import 'package:google_fonts/google_fonts.dart';
 void main() => runApp(ClassroomApp());
 
 class ClassroomApp extends StatelessWidget {
@@ -16,18 +17,72 @@ class ClassroomApp extends StatelessWidget {
   }
 }
 
+class ImageCarousel extends StatefulWidget {
+  const ImageCarousel({Key? key}) : super(key: key);
+
+  @override
+  State<ImageCarousel> createState() => _ImageCarouselState();
+}
+
+class _ImageCarouselState extends State<ImageCarousel> {
+  final List<String> imagePaths = [
+    'assets/images/bottom1.png',
+    'assets/images/bottom3.png',
+    'assets/images/bottom2.png',
+    'assets/images/bottom4.png',
+   // 'assets/images/ev1.png',
+
+  ];
+
+  int currentIndex = 0;
+  Timer? timer; // Changed from late to nullable
+
+  @override
+  void initState() {
+    super.initState();
+    startTimer();
+  }
+
+  void startTimer() {
+    timer = Timer.periodic(const Duration(seconds: 3), (timer) {
+      setState(() {
+        currentIndex = (currentIndex + 1) % imagePaths.length;
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    timer?.cancel(); // Safe cancel with null check
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 500),
+      child: Image.asset(
+        imagePaths[currentIndex],
+        key: ValueKey<String>(imagePaths[currentIndex]),
+        height: 320,
+        fit: BoxFit.contain,
+      ),
+    );
+  }
+}
+
 class HomeScreen extends StatelessWidget {
     HomeScreen({super.key}); 
   final List<Map<String, dynamic>> classes = [
-    {'title': 'Vahan 1' , 'image': 'assets/images/ev1.png',},
-    {'title': 'Vahan 2' , 'image': 'assets/images/ev1.png',},
-    {'title': 'Vahan 3' ,'image': 'assets/images/ev1.png',},
+    {'title': 'Vahaan 1' , 'image': 'assets/images/ev1.png',},
+    {'title': 'Vaahan 2' , 'image': 'assets/images/ev2.png',},
+    {'title': 'Vaahan 3' ,'image': 'assets/images/ev3.png',},
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: const Color.fromARGB(0, 81, 224, 76),
       appBar: AppBar(  title: Row(
     mainAxisSize: MainAxisSize.min,
     children: [
@@ -47,7 +102,7 @@ class HomeScreen extends StatelessWidget {
     ],
   ),
   centerTitle: true,
-  backgroundColor: Color.fromARGB(255, 243, 248, 190),
+  backgroundColor: Color.fromARGB(255, 254, 158, 158),
   elevation: 4,
   ),
       body: Container(
@@ -57,7 +112,7 @@ class HomeScreen extends StatelessWidget {
             end: Alignment.bottomCenter,
             colors: [
               Color.fromARGB(255, 251, 237, 228),
-              Color.fromARGB(255, 255, 235, 176),
+              Color.fromARGB(255, 209, 226, 252),
            
             ],
           ),
@@ -78,17 +133,16 @@ class HomeScreen extends StatelessWidget {
             ),
 
             Positioned(
-              bottom: 20,
+              bottom: 25,
               left: 0,
               right: 0,
-              child: Center(
-                child: Image.asset(
-                  'assets/images/bottom_ev1.png',
-                  height: 270,
-                  fit: BoxFit.contain,
+              child: const Center(
+                child: ImageCarousel(),
+                 // 'assets/images/bottom1.png',
+                  //height: 400,
+                  //fit: BoxFit.contain,
                 ),
               ),
-            ),
           ],
         ),
       ),
@@ -126,8 +180,10 @@ class CourseCard extends StatelessWidget {
             begin: Alignment.centerLeft,
             end: Alignment.centerRight,
             colors: [
+              Color.fromARGB(255, 209, 226, 252),
+              
   Color.fromARGB(255, 137 + (colorIndex * 20), 245, 255), // Darker variant
-  Color.fromARGB(255, 50 + (colorIndex * 30), 109, 168), // Custom ARGB
+  Color.fromARGB(255, 50 + (colorIndex * 10), 109, 168), // Custom ARGB
 
 ],
           ),
@@ -143,23 +199,22 @@ class CourseCard extends StatelessWidget {
                   children: [
                     Text(
                       title,
-                      style: TextStyle(
-                        fontSize: 20,
+                      style: GoogleFonts.poppins(
+                        fontSize: 24,
                         fontWeight: FontWeight.bold,
-                        color: Colors.blue[900],
+                        color: const Color.fromARGB(255, 0, 0, 0),
                       ),
                     ),
-                    SizedBox(height: 8),
- 
+                    SizedBox(height: 18),
                   ],
                 ),
               ),
-              SizedBox(width: 20),
+              SizedBox(width: 50), // sizebox of Vahan
               Image.asset(
                 imagePath,
-                height: 80,
-                width: 80,
-                fit: BoxFit.contain,
+                height: 170,
+                width: 170,
+                fit: BoxFit.cover,// changedfrom fit to cover
               ),
             ],
           ),
