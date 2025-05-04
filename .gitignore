@@ -46,3 +46,4 @@ app.*.map.json
 
 #Environment file ignored
 .env
+env.dart

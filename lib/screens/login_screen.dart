@@ -255,7 +255,7 @@ class LoginScreenState extends State<LoginScreen> {
                       alignment: Alignment.centerRight,
                       child: TextButton(
                         onPressed: () {
-                          // TODO: Implement forgot password functionality
+                          // Implement forgot password functionality
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
                               content: Text('Forgot password feature coming soon'),

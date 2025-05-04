@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart' as maps;
 import 'dart:async';
-import 'package:ev_tracker_app/services/websocket_service.dart';
+// import 'package:ev_tracker_app/services/websocket_service.dart'; // Remove if unused
 import 'package:ev_tracker_app/models/user.dart';
 
 // Define the Constants class
@@ -36,13 +36,13 @@ class WebSocketService {
 class MapScreen extends StatefulWidget {
   final User user;
   
-  const MapScreen({Key? key, required this.user}) : super(key: key);
+  const MapScreen({super.key, required this.user});
 
   @override
-  _MapScreenState createState() => _MapScreenState();
+  MapScreenState createState() => MapScreenState();
 }
 
-class _MapScreenState extends State<MapScreen> {
+class MapScreenState extends State<MapScreen> {
   late maps.GoogleMapController _mapController;
   final Set<maps.Marker> _markers = {};
   StreamSubscription? _wsSubscription;
@@ -245,8 +245,8 @@ class _MapScreenState extends State<MapScreen> {
             Constants.initialZoom,
           ));
         },
-        child: const Icon(Icons.home),
         tooltip: 'Return to initial position',
+        child: const Icon(Icons.home),
       ),
     );
   }

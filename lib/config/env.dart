@@ -1,19 +1,19 @@
 class Env {
   // Base URL for the API
-  static const String baseUrl = 'https://api.evtracker.example.com';
+  static const String baseUrl = 'https://web.onelap.in';
   
   // Credentials for Basic Auth
-  static const String phone = ''; // Set in your local development environment
-  static const String password = ''; // Set in your local development environment
+  static const String phone = '9182251060'; // Set in your local development environment
+  static const String password = 'Onelap@1103'; // Set in your local development environment
   
   // Google Maps API Key
-  static const String mapsApiKey = ''; // Set in your local development environment
+  static const String mapsApiKey = 'AIzaSyAxdfHJHJEGrh5GkcyfJLTeuaIZyJxCjPI'; // Set in your local development environment
   
   // WebSocket configuration
-  static const String wsUrl = 'wss://ws.evtracker.example.com';
+  static const String wsUrl = 'wss://socket.onelapmobile.com:3000';
   
   // Other configuration
-  static const int connectionTimeout = 10; // Seconds
+  static const int connectionTimeout = 5; // Seconds
   static const bool enableDebugLogs = true;
   
   // Feature flags
