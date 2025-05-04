@@ -2,9 +2,15 @@
 import 'dart:async'; // Add this line with other imports
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-void main() => runApp(ClassroomApp());
+import 'package:firebase_core/firebase_core.dart';
 
-class ClassroomApp extends StatelessWidget {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
+  runApp(const ClassroomApp());
+}
+
+class ClassroomApp  extends StatelessWidget {
     const ClassroomApp({super.key}); 
 
   @override
