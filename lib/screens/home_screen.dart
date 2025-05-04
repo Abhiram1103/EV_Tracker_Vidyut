@@ -5,9 +5,18 @@ class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
   final List<Map<String, dynamic>> classes = const [
-    {'title': 'Vaahan 1', 'image': 'assets/images/ev1.png'},
-    {'title': 'Vaahan 2', 'image': 'assets/images/ev2.png'},
-    {'title': 'Vaahan 3', 'image': 'assets/images/ev3.png'},
+    {
+      'title': 'Vaahan 1',
+      'image': 'assets/images/ev1.png',
+    },
+    {
+      'title': 'Vaahan 2',
+      'image': 'assets/images/ev2.png',
+    },
+    {
+      'title': 'Vaahan 3',
+      'image': 'assets/images/ev3.png',
+    },
   ];
 
   @override
@@ -34,7 +43,7 @@ class HomeScreen extends StatelessWidget {
               height: screenWidth * 0.15,
               width: screenWidth * 0.15,
               errorBuilder: (context, error, stackTrace) =>
-                  Icon(Icons.image_not_supported),
+                  const Icon(Icons.image_not_supported),
             ),
           ],
         ),
@@ -63,12 +72,12 @@ class HomeScreen extends StatelessWidget {
                 return GestureDetector(
                   onTap: () {
                     if (item['title'] == 'Vaahan 1') {
-                      Navigator.pushNamed(context, '/Map');
+                      Navigator.pushNamed(context, '/map');
                     }
                   },
                   child: CourseCard(
-                    title: item['title'],
-                    imagePath: item['image'],
+                    title: item['title'] as String,
+                    imagePath: item['image'] as String,
                     colorIndex: index,
                   ),
                 );
@@ -176,7 +185,7 @@ class ImageCarousel extends StatefulWidget {
 }
 
 class _ImageCarouselState extends State<ImageCarousel> {
-  final List<String> imagePaths = [
+  final List<String> imagePaths = const [
     'assets/images/bottom1.png',
     'assets/images/bottom2.png',
     'assets/images/bottom3.png',
@@ -193,13 +202,12 @@ class _ImageCarouselState extends State<ImageCarousel> {
   }
 
   void startTimer() {
-    timer = Timer.periodic(const Duration(seconds: 3), (timer) {
-      setState(() {
-        currentIndex = (currentIndex + 1) % imagePaths.length;
-      });
+  timer = Timer.periodic(const Duration(seconds: 3), (Timer timer) {
+    setState(() {
+      currentIndex = (currentIndex + 1) % imagePaths.length;
     });
+  });
   }
-
   @override
   void dispose() {
     timer?.cancel();

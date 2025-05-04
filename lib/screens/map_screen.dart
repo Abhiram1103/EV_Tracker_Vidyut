@@ -32,6 +32,8 @@ class WebSocketService {
 }
 
 class MapScreen extends StatefulWidget {
+  const MapScreen({super.key});
+
   @override
   MapScreenState createState() => MapScreenState();
 }
