@@ -74,7 +74,7 @@ class _ImageCarouselState extends State<ImageCarousel> {
 class HomeScreen extends StatelessWidget {
     HomeScreen({super.key}); 
   final List<Map<String, dynamic>> classes = [
-    {'title': 'Vahaan 1' , 'image': 'assets/images/ev1.png',},
+    {'title': 'Vaahan 1' , 'image': 'assets/images/ev1.png',},
     {'title': 'Vaahan 2' , 'image': 'assets/images/ev2.png',},
     {'title': 'Vaahan 3' ,'image': 'assets/images/ev3.png',},
   ];

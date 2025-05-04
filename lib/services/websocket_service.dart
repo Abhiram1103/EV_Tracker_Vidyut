@@ -165,9 +165,9 @@ class WebSocketService {
 
   // For testing and demo purposes
   static Stream<Map<String, dynamic>> get mockRealTimePositions async* {
-    // Starting position (San Francisco area)
-    double lat = 37.7749;
-    double lng = -122.4194;
+    // Starting position (Main Gate of NIT Delhi)
+    double lat = 28.8161453;
+    double lng = 77.1335627;
 
     // Continuously emit positions with slight movement
     while (true) {

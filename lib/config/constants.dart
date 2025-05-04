@@ -7,7 +7,7 @@ class Constants {
   // Default Google Maps camera position (NIT Delhi)
   static const double initialLat = 28.8161453;
   static const double initialLng = 77.1335627;
-  static const double initialZoom = 16.0;
+  static const double initialZoom = 18.0;
 
   // API timeouts
   static const Duration apiTimeout = Duration(seconds: 10);

@@ -3,18 +3,15 @@ import 'package:google_maps_flutter/google_maps_flutter.dart' as maps;
 import 'dart:async';
 // import 'package:ev_tracker_app/services/websocket_service.dart'; // Remove if unused
 import 'package:ev_tracker_app/models/user.dart';
+import '../config/constants.dart';
 
-// Define the Constants class
-class Constants {
-  static const double initialLat = 37.7749; // San Francisco latitude
-  static const double initialLng = -122.4194; // San Francisco longitude
-  static const double initialZoom = 12.0; // Initial zoom level
-}
+
 class WebSocketService {
   static final StreamController<Map<String, dynamic>> _controller =
       StreamController<Map<String, dynamic>>.broadcast();
 
-  static Stream<Map<String, dynamic>> get realTimePositions => _controller.stream;
+  static Stream<Map<String, dynamic>> get realTimePositions =>
+      _controller.stream;
 
   static Future<void> initialize() async {
     // Simulate WebSocket initialization
@@ -23,8 +20,8 @@ class WebSocketService {
     Timer.periodic(Duration(seconds: 5), (timer) {
       _controller.add({
         'positions': [
-          {'latitude': 37.7749, 'longitude': -122.4194} // Example position
-        ]
+          {'latitude': 28.8161453, 'longitude': 77.1335627},
+        ],
       });
     });
   }
@@ -33,9 +30,10 @@ class WebSocketService {
     _controller.close();
   }
 }
+
 class MapScreen extends StatefulWidget {
   final User user;
-  
+
   const MapScreen({super.key, required this.user});
 
   @override
@@ -61,19 +59,21 @@ class MapScreenState extends State<MapScreen> {
         _isLoading = true;
         _errorMessage = '';
       });
-      
+
       await WebSocketService.initialize();
-      
+
       _wsSubscription = WebSocketService.realTimePositions.listen(
         (data) {
           final positions = data['positions'];
           if (positions != null && positions.isNotEmpty) {
             final position = positions.first;
             if (position != null) {
-              _updateMarker(maps.LatLng(
-                position['latitude'] as double,
-                position['longitude'] as double,
-              ));
+              _updateMarker(
+                maps.LatLng(
+                  position['latitude'] as double,
+                  position['longitude'] as double,
+                ),
+              );
             }
           }
         },
@@ -84,7 +84,7 @@ class MapScreenState extends State<MapScreen> {
           });
         },
       );
-      
+
       setState(() {
         _isLoading = false;
       });
@@ -98,19 +98,23 @@ class MapScreenState extends State<MapScreen> {
 
   void _updateMarker(maps.LatLng position) {
     if (!mounted) return;
-    
+
     setState(() {
       _markers.clear();
-      _markers.add(maps.Marker(
-        markerId: const maps.MarkerId('ev'),
-        position: position,
-        icon: maps.BitmapDescriptor.defaultMarkerWithHue(maps.BitmapDescriptor.hueAzure),
-        infoWindow: const maps.InfoWindow(
-          title: 'EV Location',
-          snippet: 'Current position of your vehicle',
+      _markers.add(
+        maps.Marker(
+          markerId: const maps.MarkerId('ev'),
+          position: position,
+          icon: maps.BitmapDescriptor.defaultMarkerWithHue(
+            maps.BitmapDescriptor.hueAzure,
+          ),
+          infoWindow: const maps.InfoWindow(
+            title: 'EV Location',
+            snippet: 'Current position of your vehicle',
+          ),
         ),
-      ));
-      
+      );
+
       // Smoothly animate to the new position
       _mapController.animateCamera(maps.CameraUpdate.newLatLng(position));
     });
@@ -152,28 +156,29 @@ class MapScreenState extends State<MapScreen> {
                 );
               }
             },
-            itemBuilder: (BuildContext context) => [
-              PopupMenuItem<String>(
-                value: 'profile',
-                child: Row(
-                  children: const [
-                    Icon(Icons.person),
-                    SizedBox(width: 8),
-                    Text('Profile'),
-                  ],
-                ),
-              ),
-              PopupMenuItem<String>(
-                value: 'logout',
-                child: Row(
-                  children: const [
-                    Icon(Icons.logout),
-                    SizedBox(width: 8),
-                    Text('Logout'),
-                  ],
-                ),
-              ),
-            ],
+            itemBuilder:
+                (BuildContext context) => [
+                  PopupMenuItem<String>(
+                    value: 'profile',
+                    child: Row(
+                      children: const [
+                        Icon(Icons.person),
+                        SizedBox(width: 8),
+                        Text('Profile'),
+                      ],
+                    ),
+                  ),
+                  PopupMenuItem<String>(
+                    value: 'logout',
+                    child: Row(
+                      children: const [
+                        Icon(Icons.logout),
+                        SizedBox(width: 8),
+                        Text('Logout'),
+                      ],
+                    ),
+                  ),
+                ],
           ),
         ],
       ),
@@ -240,10 +245,12 @@ class MapScreenState extends State<MapScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          _mapController.animateCamera(maps.CameraUpdate.newLatLngZoom(
-            maps.LatLng(Constants.initialLat, Constants.initialLng),
-            Constants.initialZoom,
-          ));
+          _mapController.animateCamera(
+            maps.CameraUpdate.newLatLngZoom(
+              maps.LatLng(Constants.initialLat, Constants.initialLng),
+              Constants.initialZoom,
+            ),
+          );
         },
         tooltip: 'Return to initial position',
         child: const Icon(Icons.home),
