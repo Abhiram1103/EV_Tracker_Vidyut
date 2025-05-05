@@ -4,12 +4,12 @@ import 'package:firebase_auth/firebase_auth.dart';
 class SignUpScreen extends StatefulWidget {
 
   const SignUpScreen({super.key});
-  
+
   @override
-  _SignUpScreenState createState() => _SignUpScreenState();
+  SignUpScreenState createState() => SignUpScreenState();
 }
 
-class _SignUpScreenState extends State<SignUpScreen> {
+class SignUpScreenState extends State<SignUpScreen> {
   final _auth = FirebaseAuth.instance;
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
