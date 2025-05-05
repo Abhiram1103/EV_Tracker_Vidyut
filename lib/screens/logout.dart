@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/auth_services.dart';
-import '../services/api_services.dart';
+import '../services/device_storage.dart';
 
 class LogoutDialog extends StatelessWidget {
   final Color accentColor;
@@ -13,29 +13,28 @@ class LogoutDialog extends StatelessWidget {
     required this.accentColor,
     required this.parentContext,
   });
+  Future<void> logout(BuildContext context) async {
+  await DeviceStorage.clearDeviceId(); // <-- HERE
+  await AuthService.logoutUser();
+  Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+}
 
   Future<void> _performLogout() async {
-    try {
-      // Close any active connections
-      await ApiService.dispose();
-      
-      // Perform Firebase logout
-      await FirebaseAuth.instance.signOut();
-      
-      // Clear local authentication state
-      await AuthService.logout();
+  try {
+    // Perform Firebase logout
+    await FirebaseAuth.instance.signOut();
+    
+    // Clear local authentication state
+    await AuthService.logout();
 
-      // Navigate back to login screen
-      Navigator.of(parentContext).pushNamedAndRemoveUntil(
-        '/login',
-        (Route<dynamic> route) => false,
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(parentContext).showSnackBar(
-        SnackBar(content: Text('Logout failed: ${e.toString()}')),
-      );
-    }
+    // Navigate back to login screen
+    Navigator.of(parentContext).pushNamedAndRemoveUntil('/login',(Route<dynamic> route) => false,);
+  } catch (e) {
+    ScaffoldMessenger.of(parentContext).showSnackBar(
+      SnackBar(content: Text('Logout failed: ${e.toString()}')),
+    );
   }
+}
 
   @override
   Widget build(BuildContext context) {
